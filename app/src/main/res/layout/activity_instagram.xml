@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:ads="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/activity_instagram"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+
+    tools:context="com.newgendevelopers3.fiyt.Instagram">
+
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/instagramToolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:popupTheme="@style/AppTheme.PopupOverlay"
+        app:popupTheme="@style/AppTheme.PopupOverlay"
+        android:paddingTop="0dp"
+        android:background="@android:color/darker_gray"
+        app:title="Instagram"
+        app:titleTextColor="@android:color/background_light" />
+
+    <android.support.v4.widget.SwipeRefreshLayout
+        android:id="@+id/swipeToRefresh3"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/instagramToolbar"
+        android:layout_above="@+id/instagramBanner">
+
+    </android.support.v4.widget.SwipeRefreshLayout>
+
+
+
+    <com.google.android.gms.ads.AdView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:id="@+id/instagramBanner"
+        ads:adSize="BANNER"
+        ads:adUnitId="ca-app-pub-4882008364654829/5504215196">
+
+    </com.google.android.gms.ads.AdView>
+
+</RelativeLayout>
+

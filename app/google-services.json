@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "549801424378",
+    "firebase_url": "https://fiyt-d2090.firebaseio.com",
+    "project_id": "fiyt-d2090",
+    "storage_bucket": "fiyt-d2090.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:549801424378:android:b4adaca748025bc6",
+        "android_client_info": {
+          "package_name": "com.newgendevelopers3.fiyt"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "549801424378-kekh0c9ajr1ud8341deql6jrtl9onhk5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDDEvUcaEZ5YKOq68YdVSoJ3XU5yKnYoLM"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

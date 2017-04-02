@@ -1,0 +1,32 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.newgendevelopers3.fiyt.ExternalLinkActivity">
+
+    <item
+        android:title=""
+        android:orderInCategory="1"
+        android:id="@+id/action_backward"
+        android:icon="@drawable/ic_action_backward"
+        app:showAsAction="always"
+        />
+
+    <item
+        android:title=""
+        android:orderInCategory="2"
+        android:id="@+id/action_reload"
+        android:icon="@drawable/ic_action_reload"
+        app:showAsAction="always"
+        />
+
+    <item
+        android:title=""
+        android:orderInCategory="3"
+        android:id="@+id/action_cross"
+        android:icon="@drawable/ic_cross"
+        app:showAsAction="always"
+        />
+
+
+
+</menu>
