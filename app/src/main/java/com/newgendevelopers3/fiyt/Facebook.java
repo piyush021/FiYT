@@ -1,26 +1,41 @@
 package com.newgendevelopers3.fiyt;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.ValueCallback;
+import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+
+import static android.app.Activity.RESULT_OK;
 
 
 public class Facebook extends Fragment {
+
+    private static final String TAG = MainActivity.class.getSimpleName();
+    private String mCM;
+    private ValueCallback<Uri> mUM;
+    private ValueCallback<Uri[]> mUMA;
+    private final static int FCR = 1;
     public WebView wv;
     SwipeRefreshLayout myswipefacebook;
-    public Facebook() {
 
-    }
-
+    //returns a new instance of this class
     public static Facebook newInstance() {
         Facebook fragment = new Facebook();
         return fragment;
@@ -29,12 +44,10 @@ public class Facebook extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_facebook, container, false);
         wv = (WebView) view.findViewById(R.id.facebookWebView);
         myswipefacebook = (SwipeRefreshLayout) view.findViewById(R.id.swipeToRefresh1);
@@ -45,13 +58,11 @@ public class Facebook extends Fragment {
         wv.getSettings().setDisplayZoomControls(false);
         wv.getSettings().setUseWideViewPort(true);
         wv.getSettings().setDomStorageEnabled(true);
-
         wv.setWebViewClient(new MyWebViewClient());
-        MainActivity m=(MainActivity)getActivity();
-        m.setWebChromeClientInMainActivity(this);
-
+        wv.setWebChromeClient(new MyWebChromeClient());
         wv.clearCache(true);
         wv.clearHistory();
+        //handle links clicks redirection from another app
         Intent i=getActivity().getIntent();
         if(i.getData()!=null){
             Uri u=i.getData();
@@ -63,9 +74,7 @@ public class Facebook extends Fragment {
             else wv.loadUrl("https://m.facebook.com");
         }
         else wv.loadUrl("https://m.facebook.com");
-
         setRetainInstance(true);
-
         myswipefacebook.setOnRefreshListener(
                 new SwipeRefreshLayout.OnRefreshListener() {
                     @Override
@@ -74,15 +83,13 @@ public class Facebook extends Fragment {
                     }
                 }
         );
-
         return view;
     }
 
     private class MyWebViewClient extends WebViewClient {
-
+        //this makes sure that links open in the same webView
         @Override
         public boolean shouldOverrideUrlLoading(final WebView view, final String url) {
-
             if (url.startsWith("https://m.facebook.com") || url.startsWith("https://www.facebook.com")||url.startsWith("https://facebook.com")) {
                 view.loadUrl(url);
                 return true;
@@ -98,7 +105,7 @@ public class Facebook extends Fragment {
                 return true;
             }
         }
-
+        //animation showing that page is loading
         @Override
         public void onPageStarted(WebView view, String url, Bitmap favicon) {
             super.onPageStarted(view, url, favicon);
@@ -112,7 +119,130 @@ public class Facebook extends Fragment {
             myswipefacebook.setRefreshing(false);
         }
 
-
     }
+
+    //this method gets result from fileChooser
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        super.onActivityResult(requestCode, resultCode, intent);
+        if (Build.VERSION.SDK_INT >= 21) {
+            Uri[] results = null;
+            if (resultCode == RESULT_OK) {
+                if (requestCode == FCR) {
+                    if (null == mUMA) {
+                        return;
+                    }
+                    if (intent == null) {
+                        if (mCM != null) {
+                            results = new Uri[]{Uri.parse(mCM)};
+                        }
+                    } else {
+                        String dataString = intent.getDataString();
+                        if (dataString != null) {
+                            results = new Uri[]{Uri.parse(dataString)};
+                        }
+                    }
+                }
+            }
+            mUMA.onReceiveValue(results);
+            mUMA = null;
+        } else {
+            if (requestCode == FCR) {
+                if (null == mUM) return;
+                Uri result = intent == null || resultCode != RESULT_OK ? null : intent.getData();
+                mUM.onReceiveValue(result);
+                mUM = null;
+            }
+        }
+    }
+
+    //This is magic code
+    //It just somehow helps in uploading files
+    //I have no idea how this works
+    public class MyWebChromeClient extends WebChromeClient {
+
+        public MyWebChromeClient() {
+            super();
+        }
+        //Create an image file
+        //used by onShowFileChooser method below
+        private File createImageFile() throws IOException {
+            @SuppressLint("SimpleDateFormat")
+            String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new java.util.Date());
+            String imageFileName = "img_" + timeStamp + "_";
+            File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+            return File.createTempFile(imageFileName, ".jpg", storageDir);
+        }
+
+        //For Android 3.0+
+        public void openFileChooser(ValueCallback<Uri> uploadMsg) {
+            mUM = uploadMsg;
+            Intent i = new Intent(Intent.ACTION_GET_CONTENT);
+            i.addCategory(Intent.CATEGORY_OPENABLE);
+            i.setType("image/*");
+            startActivityForResult(Intent.createChooser(i, "File Chooser"), FCR);
+        }
+
+        // For Android 3.0+, above method not supported in some android 3+ versions, in such case we use this
+        public void openFileChooser(ValueCallback uploadMsg, String acceptType) {
+            mUM = uploadMsg;
+            Intent i = new Intent(Intent.ACTION_GET_CONTENT);
+            i.addCategory(Intent.CATEGORY_OPENABLE);
+            i.setType("*/*");
+            startActivityForResult(Intent.createChooser(i, "File Browser"), FCR);
+        }
+
+        //For Android 4.1+
+        public void openFileChooser(ValueCallback<Uri> uploadMsg, String acceptType, String capture) {
+            mUM = uploadMsg;
+            Intent i = new Intent(Intent.ACTION_GET_CONTENT);
+            i.addCategory(Intent.CATEGORY_OPENABLE);
+            i.setType("image/*");
+            startActivityForResult(Intent.createChooser(i, "File Chooser"), FCR);
+        }
+
+        //For Android 5.0+
+        public boolean onShowFileChooser(
+                WebView webView, ValueCallback<Uri[]> filePathCallback,
+                WebChromeClient.FileChooserParams fileChooserParams) {
+            if (mUMA != null) {
+                mUMA.onReceiveValue(null);
+            }
+
+            mUMA = filePathCallback;
+            Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            if (takePictureIntent.resolveActivity(getActivity().getPackageManager()) != null) {
+                File photoFile = null;
+                try {
+                    photoFile = createImageFile();
+                    takePictureIntent.putExtra("PhotoPath", mCM);
+                } catch (IOException ex) {
+                    Log.e(TAG, "Image file creation failed", ex);
+                }
+                if (photoFile != null) {
+                    mCM = "file:" + photoFile.getAbsolutePath();
+                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photoFile));
+                } else {
+                    takePictureIntent = null;
+                }
+            }
+            Intent contentSelectionIntent = new Intent(Intent.ACTION_GET_CONTENT);
+            contentSelectionIntent.addCategory(Intent.CATEGORY_OPENABLE);
+            contentSelectionIntent.setType("image/*");
+            Intent[] intentArray;
+            if (takePictureIntent != null) {
+                intentArray = new Intent[]{takePictureIntent};
+            } else {
+                intentArray = new Intent[0];
+            }
+            Intent chooserIntent = new Intent(Intent.ACTION_CHOOSER);
+            chooserIntent.putExtra(Intent.EXTRA_INTENT, contentSelectionIntent);
+            chooserIntent.putExtra(Intent.EXTRA_TITLE, "Image Chooser");
+            chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, intentArray);
+            startActivityForResult(chooserIntent, FCR);
+            return true;
+        }
+
+    }//end of web chrome client
 
 }

@@ -1,5 +1,10 @@
 package com.newgendevelopers3.fiyt;
 
+/*
+ This activity checks permission to draw over other apps
+ FiYT can not run without this permission
+*/
+
 import android.annotation.TargetApi;
 import android.content.Intent;
 import android.net.Uri;
@@ -16,70 +21,81 @@ public class Start extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_start);
-        new CheckInBackground().execute();
-    }
-
-    private class CheckInBackground extends AsyncTask<Void,Void,Void> {
-        @Override
-        protected Void doInBackground(Void... voids) {
-            checkPermission();
-            return null;
-        }
-    }
-
-    public void checkPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-
-            if (!android.provider.Settings.canDrawOverlays(this)) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(Start.this,"Please Allow FiYT To Draw Over Other Apps",Toast.LENGTH_LONG).show();
-
-                    }
-                });
-                Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                        Uri.parse("package:" + getPackageName()));
-                startActivityForResult(intent, ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE);
-            }
-            else {
-                startActivity(new Intent(this,MainActivity.class));
-                finish();
-            }
-        }
-        else {
-            startActivity(new Intent(this,MainActivity.class));
-            finish();
-        }
+        //check permission in async task
+        //sending reference of this class async task class will use to make toast etc.
+        //async task class is defined below this class
+        new CheckInBackground(this).execute();
     }
 
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        System.exit(0);
+        finish();
     }
 
-    public static int ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE= 5469;
-
+    //This function will check the result of activity started by async task
     @TargetApi(Build.VERSION_CODES.M)
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
-
-        if(resultCode==RESULT_CANCELED){
-            Log.i("CANCLED","hhhhj");
+        if (resultCode == RESULT_CANCELED) {
             finish();
         }
 
-        if (requestCode == ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE) {
-            if (!android.provider.Settings.canDrawOverlays(this)){
-                Toast.makeText(this,"Permission Not Granted.Exiting...",Toast.LENGTH_SHORT).show();
+        if (requestCode == Constants.ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE) {
+            if (!android.provider.Settings.canDrawOverlays(this)) {
+                //permission not granted
+                Toast.makeText(this, "Permission Not Granted.Exiting...", Toast.LENGTH_LONG).show();
                 finish();
-            }
-            else{
-                startActivity(new Intent(this,MainActivity.class));
+            } else {
+                //permission granted
+                //start the main activity
+                startActivity(new Intent(this, MainActivity.class));
                 finish();
             }
         }
+
     }
+}
+
+//using inner class is a bad idea
+//class that checks for permission as AsyncTask
+class CheckInBackground extends AsyncTask<Void, Void, Void> {
+
+    //reference to Start activity
+    Start start;
+
+    public CheckInBackground(Start start) {
+        this.start = start;
+    }
+
+    @Override
+    protected Void doInBackground(Void... voids) {
+        //only ask for permission in android version marshmallow or above
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            //ask for permission if not granted already
+            if (!android.provider.Settings.canDrawOverlays(start)) {
+                start.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(start, "Please Allow FiYT To Draw Over Other Apps", Toast.LENGTH_LONG).show();
+                    }
+                });
+                Intent intent = new Intent(
+                        android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        Uri.parse("package:" + start.getPackageName())
+                );
+                start.startActivityForResult(intent, Constants.ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE);
+            } else {
+                start.startActivity(new Intent(start, MainActivity.class));
+                start.finish();
+            }
+        } else {
+            //already have permission
+            start.startActivity(new Intent(start, MainActivity.class));
+            start.finish();
+        }
+        return null;
+    }
+
 }
